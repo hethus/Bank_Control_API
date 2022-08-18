@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "../entity_diagram.pdf"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String   @id @default(auto())   @map("_id") @db.ObjectId
+  name             String   
+  email            String   
+  password         String   
+  lastMessage      String?                         @map("last_message")
+  lastMessageAt    DateTime?                       @map("last_message_at")
+  messagesCreateds Int      @default(0)            @map("messages_createds")
+  createdAt        DateTime @default(now())        @map("created_at") 
+  updatedAt        DateTime @default(now())        @map("updated_at")
+
+  @@map("users")
+}
+
+model Message {
+  id               String   @id @default(auto())   @map("_id") @db.ObjectId
+  text             String
+  nickname         String?
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+
+  @@map("messages")
+}
