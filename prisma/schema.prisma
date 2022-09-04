@@ -12,26 +12,103 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id               String   @id @default(auto())   @map("_id") @db.ObjectId
-  name             String   
-  email            String   
-  password         String   
-  lastMessage      String?                         @map("last_message")
-  lastMessageAt    DateTime?                       @map("last_message_at")
-  messagesCreateds Int      @default(0)            @map("messages_createds")
-  createdAt        DateTime @default(now())        @map("created_at") 
-  updatedAt        DateTime @default(now())        @map("updated_at")
-
-  @@map("users")
+type Frequency {
+  time             String
+  isAlive          Boolean  @default(true)         @map("is_alive")
 }
 
-model Message {
+type constancy {
+  from            String // mes especifico, valor especifico ou valor padrao (ate a data final da mark)
+  date            DateTime?
+  value           Float?
+  createdAt       DateTime @default(now())         @map("created_at")
+  updatedAt       DateTime @default(now())         @map("updated_at")
+}
+
+model User {
   id               String   @id @default(auto())   @map("_id") @db.ObjectId
-  text             String
-  nickname         String?
+  name             String
+  email            String   @unique
+  value            Float    @default(0)
+  password         String
+  banks            Bank[]
+  marks            Mark[]
+  historics        Historic[]
   createdAt        DateTime @default(now())        @map("created_at")
   updatedAt        DateTime @default(now())        @map("updated_at")
 
-  @@map("messages")
+  @@map("users")
+  @@unique([banks.debts.name, marks.name, banks.name, banks.currencys.name, banks.credit.name])
+}
+
+type Bank {
+  name             String
+  value            Float?
+  credit           Credit?
+  currencys        Currency[]
+  debts            Debt[]
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+}
+
+type Currency {
+  name             String
+  value            Float
+  isFrequent       Boolean  @default(false)        @map("is_frequent")
+  frequency        Frequency?
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+}
+
+type Credit {
+  name             String
+  value            Float
+  dueDate          DateTime                        @map("due_date")
+  isAlive          Boolean  @default(true)         @map("is_alive")
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+}
+
+type Mark {
+  name             String
+  price            Float
+  isAlive          Boolean  @default(true)         @map("is_alive") //se estiver false, e for para true, devera ser feito update
+  commits          Commit[]
+  conclusionDate   DateTime                        @map("conclusion_date")
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+}
+
+type Commit {
+  name             String
+  isPorcentage     Boolean  @default(false)        @map("is_porcentage")
+  value            Float // se isPorcentage for true, price é em porcentagem
+  isConstant       Boolean  @default(false)        @map("is_constant")
+  constancy        constancy?
+  isAlive          Boolean  @default(true)         @map("is_alive")
+  origin           String // pode ser o nome de um Currency ou de um Bank / Credit
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+}
+
+type Debt {
+  name             String
+  price            Float
+  isCredit         Boolean  @default(false)        @map("is_credit")
+  isFrequent       Boolean  @default(false)        @map("is_frequent")
+  frequency        Frequency?
+  origin           String // pode ser o nome de um Currency ou de um Bank / Credit
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+}
+
+type Historic {
+  operation        String  // se é debt, credit, mark, bank, currency, commit
+  where            String? // se for debt, credit ou currency, ai é o name do bank, se for commit, ai é o name da mark
+  debt             Debt?
+  credit           Credit?
+  mark             Mark?
+  bank             Bank?
+  currency         Currency?
+  commit           Commit?
 }
