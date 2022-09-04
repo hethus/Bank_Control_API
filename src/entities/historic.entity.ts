@@ -1,16 +1,12 @@
-import { Historic } from 'src/entities/historic.entity';
-
-export class User {
-  id?: string;
-  name: string;
-  email: string;
-  password?: string;
-  value?: number; // user nunca mexe nisso
-  banks?: Bank[]; // user nunca mexe nisso
-  marks?: Mark[]; // user nunca mexe nisso
-  historics?: Historic[]; // user nunca mexe nisso
-  createdAt?: Date;
-  updatedAt?: Date;
+export class Historic {
+  operation: string;
+  where: string;
+  debt?: Debt;
+  credit?: Credit;
+  mark?: Mark;
+  bank?: Bank;
+  currency?: Currency;
+  commit?: Commit;
 }
 
 class Frequency {

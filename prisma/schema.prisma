@@ -28,7 +28,7 @@ type constancy {
 model User {
   id               String   @id @default(auto())   @map("_id") @db.ObjectId
   name             String
-  email            String   @unique
+  email            String
   value            Float    @default(0)
   password         String
   banks            Bank[]
@@ -38,7 +38,7 @@ model User {
   updatedAt        DateTime @default(now())        @map("updated_at")
 
   @@map("users")
-  @@unique([banks.debts.name, marks.name, banks.name, banks.currencys.name, banks.credit.name])
+  @@unique([email])
 }
 
 type Bank {
