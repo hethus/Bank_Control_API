@@ -14,10 +14,11 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
-    .setTitle('E Winhout Mail API')
+    .setTitle('Bank Control API')
     .setDescription(
-      "E Winhout Mail API is a RESTful API game for sending messages to the database and receiving messages from the database, and also you can't see who sent the message to you.",
+      "Bank Control API is a REST API that allows you to manage your bank's accounts and transactions, also create marks for future objectives.",
     )
+    .addTag('users')
     .setVersion('1.0.0')
     .build();
 
