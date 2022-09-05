@@ -18,8 +18,10 @@ async function bootstrap() {
     .setDescription(
       "Bank Control API is a REST API that allows you to manage your bank's accounts and transactions, also create marks for future objectives.",
     )
-    .addTag('default')
+    .addTag('status')
+    .addTag('auth')
     .addTag('users')
+    .addBearerAuth()
     .setVersion('1.0.0')
     .build();
 
