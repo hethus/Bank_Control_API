@@ -25,33 +25,17 @@ type constancy {
   updatedAt       DateTime @default(now())         @map("updated_at")
 }
 
-model User {
-  id               String   @id @default(auto())   @map("_id") @db.ObjectId
-  name             String
-  email            String   @unique
-  value            Float    @default(0)
-  password         String
-  banks            Bank[]
-  marks            Mark[]
-  historics        Historic[]
-  createdAt        DateTime @default(now())        @map("created_at")
-  updatedAt        DateTime @default(now())        @map("updated_at")
-
-  @@map("users")
-  @@unique([banks.debts.name, marks.name, banks.name, banks.currencys.name, banks.credit.name])
-}
-
-type Bank {
+type BankType {
   name             String
   value            Float?
-  credit           Credit?
-  currencys        Currency[]
-  debts            Debt[]
+  credit           CreditType?
+  currencys        CurrencyType[]
+  debts            DebtType[]
   createdAt        DateTime @default(now())        @map("created_at")
   updatedAt        DateTime @default(now())        @map("updated_at")
 }
 
-type Currency {
+type CurrencyType {
   name             String
   value            Float
   isFrequent       Boolean  @default(false)        @map("is_frequent")
@@ -60,7 +44,7 @@ type Currency {
   updatedAt        DateTime @default(now())        @map("updated_at")
 }
 
-type Credit {
+type CreditType {
   name             String
   value            Float
   dueDate          DateTime                        @map("due_date")
@@ -69,17 +53,17 @@ type Credit {
   updatedAt        DateTime @default(now())        @map("updated_at")
 }
 
-type Mark {
+type MarkType {
   name             String
   price            Float
   isAlive          Boolean  @default(true)         @map("is_alive") //se estiver false, e for para true, devera ser feito update
-  commits          Commit[]
+  commits          CommitType[]
   conclusionDate   DateTime                        @map("conclusion_date")
   createdAt        DateTime @default(now())        @map("created_at")
   updatedAt        DateTime @default(now())        @map("updated_at")
 }
 
-type Commit {
+type CommitType {
   name             String
   isPorcentage     Boolean  @default(false)        @map("is_porcentage")
   value            Float // se isPorcentage for true, price é em porcentagem
@@ -91,7 +75,7 @@ type Commit {
   updatedAt        DateTime @default(now())        @map("updated_at")
 }
 
-type Debt {
+type DebtType {
   name             String
   price            Float
   isCredit         Boolean  @default(false)        @map("is_credit")
@@ -102,13 +86,128 @@ type Debt {
   updatedAt        DateTime @default(now())        @map("updated_at")
 }
 
-type Historic {
-  operation        String  // se é debt, credit, mark, bank, currency, commit
-  where            String? // se for debt, credit ou currency, ai é o name do bank, se for commit, ai é o name da mark
-  debt             Debt?
+model User {
+  id               String   @id @default(auto())   @map("_id") @db.ObjectId
+  name             String
+  email            String
+  value            Float    @default(0)
+  password         String
+  banks            Bank[]
+  marks            Mark[]
+  historics        Historic[]
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+
+  @@map("users")
+  @@unique([email])
+}
+
+model Bank {
+  id               String   @id @default(auto())   @map("_id") @db.ObjectId
+  user             User     @relation(fields: [userEmail], references: [email])
+  userEmail        String
+  name             String
+  value            Float?
   credit           Credit?
-  mark             Mark?
-  bank             Bank?
-  currency         Currency?
-  commit           Commit?
+  currencys        Currency[]
+  debts            Debt[]
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+
+  @@map("banks")
+  @@unique([name])
+}
+
+model Currency {
+  id               String   @id @default(auto())   @map("_id") @db.ObjectId
+  bank             Bank     @relation(fields: [bankName], references: [name])
+  bankName         String                          @map("bank_name")
+  name             String
+  value            Float
+  isFrequent       Boolean  @default(false)        @map("is_frequent")
+  frequency        Frequency?
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+
+  @@map("currencys")
+} // colocar verificação name currency in bank atual
+
+model Credit {
+  id               String   @id @default(auto())   @map("_id") @db.ObjectId
+  bank             Bank     @relation(fields: [bankName], references: [name])
+  bankName         String   @unique                @map("bank_name")
+  name             String
+  value            Float
+  dueDate          DateTime                        @map("due_date")
+  isAlive          Boolean  @default(true)         @map("is_alive")
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+
+  @@map("credits")
+} // colocar verificação name credit in bank atual
+
+model Mark {
+  id               String   @id @default(auto())   @map("_id") @db.ObjectId
+  user             User     @relation(fields: [userEmail], references: [email])
+  userEmail        String
+  name             String
+  price            Float
+  isAlive          Boolean  @default(true)         @map("is_alive") //se estiver false, e for para true, devera ser feito update
+  commits          Commit[]
+  conclusionDate   DateTime                        @map("conclusion_date")
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+
+  @@map("marks")
+  @@unique([name])
+}
+
+model Commit {
+  id               String   @id @default(auto())   @map("_id") @db.ObjectId
+  mark             Mark     @relation(fields: [markName], references: [name])
+  markName         String                          @map("mark_name")
+  name             String
+  isPorcentage     Boolean  @default(false)        @map("is_porcentage")
+  value            Float // se isPorcentage for true, price é em porcentagem
+  isConstant       Boolean  @default(false)        @map("is_constant")
+  constancy        constancy?
+  isAlive          Boolean  @default(true)         @map("is_alive")
+  origin           String // pode ser o nome de um Currency ou de um Bank / Credit
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+
+  @@map("commits")
+} // colocar verificação name commit in mark atual
+
+model Debt {
+  id               String   @id @default(auto())   @map("_id") @db.ObjectId
+  bank             Bank     @relation(fields: [bankName], references: [name])
+  bankName         String                          @map("bank_name")
+  name             String   @unique
+  price            Float
+  isCredit         Boolean  @default(false)        @map("is_credit")
+  isFrequent       Boolean  @default(false)        @map("is_frequent")
+  frequency        Frequency?
+  origin           String // pode ser o nome de um Currency ou de um Bank / Credit
+  createdAt        DateTime @default(now())        @map("created_at")
+  updatedAt        DateTime @default(now())        @map("updated_at")
+
+  @@map("debts")
+} // colocar verificação name debt in bank atual
+
+model Historic {
+  id               String   @id @default(auto())   @map("_id") @db.ObjectId
+  user             User     @relation(fields: [userEmail], references: [email])
+  userEmail        String
+  operation        String  // se é debt, credit, mark, bank, currency, commit
+  where            String? // se for debt, credit ou currency, ai é o name do bank, se for commit, ai é o name da mark, mark não precisa desse campo
+  debt             DebtType?
+  credit           CreditType?
+  mark             MarkType?
+  bank             BankType?
+  currency         CurrencyType?
+  commit           CommitType?
+  createdAt        DateTime @default(now())        @map("created_at")
+
+  @@map("historics")
 }

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotAcceptableException,
+  NotFoundException,
+} from '@nestjs/common';
 import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcryptjs';
@@ -25,13 +29,17 @@ export class UsersService {
   async create(dto: CreateUserDto): Promise<User> {
     const hashedPassword = await bcrypt.hash(dto.password, 8);
 
-    const data: CreateUserDto = {
+    const data = {
       name: dto.name,
       email: dto.email,
       password: hashedPassword,
+      historics: {
+        create: {
+          operation: 'create',
+        },
+      },
     };
-
-    return this.prisma.user
+    return await this.prisma.user
       .create({ data, select: this.userSelect })
       .catch(handleErrorConstraintUnique);
   }
@@ -49,13 +57,32 @@ export class UsersService {
 
     dto.updatedAt = new Date();
 
+    if (dto.email) {
+      throw new NotAcceptableException('Email cannot be updated');
+    }
+
     return this.prisma.user
-      .update({ where: { id }, data: dto, select: this.userSelect })
+      .update({
+        where: { id },
+        data: {
+          ...dto,
+          historics: {
+            create: {
+              operation: 'update',
+            },
+          },
+        },
+        select: this.userSelect,
+      })
       .catch(handleErrorConstraintUnique);
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} user`;
+  async remove(id: string) {
+    const user = await this.verifyIdAndReturnUser(id);
+    await this.prisma.user.delete({ where: { id } });
+    return this.prisma.historic.deleteMany({
+      where: { userEmail: user.email },
+    });
   }
 
   async verifyIdAndReturnUser(id: string): Promise<User> {
