@@ -14,6 +14,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { User } from '@prisma/client';
 import { AuthGuard } from '@nestjs/passport';
+import { Headers } from '@nestjs/common';
 
 @ApiTags('users')
 @Controller('users')
@@ -34,8 +35,11 @@ export class UsersController {
     summary: 'Get user by id',
   })
   @ApiBearerAuth()
-  findOne(@Param('id') id: string): Promise<User | void> {
-    return this.usersService.findOne(id);
+  findOne(
+    @Headers() headers: { authorization: string },
+    @Param('id') id: string,
+  ): Promise<User | void> {
+    return this.usersService.findOne(id, headers);
   }
 
   @Patch(':id')
@@ -45,10 +49,11 @@ export class UsersController {
   })
   @ApiBearerAuth()
   update(
+    @Headers() headers: { authorization: string },
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
   ): Promise<User | void> {
-    return this.usersService.update(id, dto);
+    return this.usersService.update(id, dto, headers);
   }
 
   @Delete(':id')
@@ -57,7 +62,10 @@ export class UsersController {
     summary: 'Delete user',
   })
   @ApiBearerAuth()
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(id);
+  remove(
+    @Headers() headers: { authorization: string },
+    @Param('id') id: string,
+  ) {
+    return this.usersService.remove(id, headers);
   }
 }

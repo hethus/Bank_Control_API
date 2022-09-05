@@ -1,4 +1,4 @@
-import { Historic } from 'src/users/entities/historic.entity';
+import { Historic } from 'src/historics/entities/historic.entity';
 import { Bank } from './bank.entity';
 
 export class User {
