@@ -1,4 +1,5 @@
-import { Historic } from 'src/entities/historic.entity';
+import { Historic } from 'src/users/entities/historic.entity';
+import { Bank } from './bank.entity';
 
 export class User {
   id?: string;
@@ -13,11 +14,6 @@ export class User {
   updatedAt?: Date;
 }
 
-class Frequency {
-  time: string;
-  isAlive: boolean;
-} //
-
 class Constancy {
   from: string;
   date: Date;
@@ -25,34 +21,6 @@ class Constancy {
   createdAt?: Date;
   updatedAt?: Date;
 } //
-
-class Bank {
-  name: string;
-  value?: number;
-  credit?: Credit;
-  Debts?: Debt[];
-  currencys?: Currency[];
-  createdAt?: Date;
-  updatedAt?: Date;
-} // tirar
-
-class Currency {
-  name: string;
-  value: number;
-  isFrequent: boolean;
-  frequency?: Frequency;
-  createdAt?: Date;
-  updatedAt?: Date;
-} // tirar
-
-class Credit {
-  name: string;
-  value: number;
-  dueDate: Date;
-  isAlive: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-} // tirar
 
 class Mark {
   name: string;
@@ -71,17 +39,6 @@ class Commit {
   isConstant: boolean;
   constancy?: Constancy;
   isAlive: boolean;
-  origin: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-} // tirar
-
-class Debt {
-  name: string;
-  price: number;
-  isCredit: boolean;
-  isFrequent: boolean;
-  frequency?: Frequency;
   origin: string;
   createdAt?: Date;
   updatedAt?: Date;
