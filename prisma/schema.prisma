@@ -21,6 +21,7 @@ type constancy {
   from            String // mes especifico, valor especifico ou valor padrao (ate a data final da mark)
   date            DateTime?
   value           Float?
+  isAlive          Boolean  @default(true)         @map("is_alive")
   createdAt       DateTime @default(now())         @map("created_at")
   updatedAt       DateTime @default(now())         @map("updated_at")
 }
@@ -31,6 +32,7 @@ type BankType {
   credit           CreditType?
   currencys        CurrencyType[]
   debts            DebtType[]
+  isAlive          Boolean  @default(true)         @map("is_alive")
   createdAt        DateTime @default(now())        @map("created_at")
   updatedAt        DateTime @default(now())        @map("updated_at")
 }
@@ -111,6 +113,7 @@ model Bank {
   credit           Credit?
   currencys        Currency[]
   debts            Debt[]
+  isAlive          Boolean  @default(true)         @map("is_alive")
   createdAt        DateTime @default(now())        @map("created_at")
   updatedAt        DateTime @default(now())        @map("updated_at")
 
@@ -200,7 +203,7 @@ model Historic {
   user             User     @relation(fields: [userEmail], references: [email])
   userEmail        String
   operation        String  // se é debt, credit, mark, bank, currency, commit
-  where            String? // se for debt, credit ou currency, ai é o name do bank, se for commit, ai é o name da mark, mark não precisa desse campo
+  where            String? // se for debt, credit ou currency, ai é o name do bank, se for commit, ai é o name da mark, mark e bank não precisa desse campo
   debt             DebtType?
   credit           CreditType?
   mark             MarkType?

@@ -2,7 +2,7 @@ export class Bank {
   name: string;
   value?: number;
   credit?: Credit;
-  Debts?: Debt[];
+  debts?: Debt[];
   currencys?: Currency[];
   createdAt?: Date;
   updatedAt?: Date;

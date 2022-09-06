@@ -21,6 +21,8 @@ async function bootstrap() {
     .addTag('status')
     .addTag('auth')
     .addTag('users')
+    .addTag('banks')
+    .addTag('historic')
     .addBearerAuth()
     .setVersion('1.0.0')
     .build();

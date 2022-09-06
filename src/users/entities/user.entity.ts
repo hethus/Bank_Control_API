@@ -1,5 +1,5 @@
+import { Bank } from 'src/banks/entities/bank.entity';
 import { Historic } from 'src/historics/entities/historic.entity';
-import { Bank } from './bank.entity';
 
 export class User {
   id?: string;

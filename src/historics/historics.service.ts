@@ -11,10 +11,10 @@ export class HistoricsService {
     email: string,
     headers: { authorization: string },
   ): Promise<Historic[]> {
-    return this.verifyEmailAndReturnUser(headers, email);
+    return this.verifyEmailAndReturnHistoric(headers, email);
   }
 
-  async verifyEmailAndReturnUser(
+  async verifyEmailAndReturnHistoric(
     headers: { authorization: string },
     email: string,
   ): Promise<Historic[]> {

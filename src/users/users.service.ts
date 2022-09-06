@@ -36,7 +36,7 @@ export class UsersService {
       password: hashedPassword,
       historics: {
         create: {
-          operation: 'create',
+          operation: 'Create User',
         },
       },
     };
@@ -73,7 +73,7 @@ export class UsersService {
           ...dto,
           historics: {
             create: {
-              operation: 'update',
+              operation: 'Update User',
             },
           },
         },
