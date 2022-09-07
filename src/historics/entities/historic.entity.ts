@@ -1,3 +1,5 @@
+import { Bank, Credit } from 'src/banks/entities/bank.entity';
+
 export class Historic {
   operation: string;
   where: string;
@@ -22,30 +24,11 @@ class Constancy {
   updatedAt?: Date;
 } //
 
-class Bank {
-  name: string;
-  value?: number;
-  credit?: Credit;
-  Debts?: Debt[];
-  currencys?: Currency[];
-  createdAt?: Date;
-  updatedAt?: Date;
-} // tirar
-
 class Currency {
   name: string;
   value: number;
   isFrequent: boolean;
   frequency?: Frequency;
-  createdAt?: Date;
-  updatedAt?: Date;
-} // tirar
-
-class Credit {
-  name: string;
-  value: number;
-  dueDate: Date;
-  isAlive: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 } // tirar

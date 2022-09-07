@@ -137,8 +137,8 @@ model Currency {
 
 model Credit {
   id               String   @id @default(auto())   @map("_id") @db.ObjectId
-  bank             Bank     @relation(fields: [bankName], references: [name])
-  bankName         String   @unique                @map("bank_name")
+  bank             Bank     @relation(fields: [bankId], references: [id])
+  bankId           String   @unique                @map("bank_id")
   name             String
   value            Float
   dueDate          DateTime                        @map("due_date")

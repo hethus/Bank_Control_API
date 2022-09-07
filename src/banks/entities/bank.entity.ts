@@ -22,15 +22,6 @@ class Currency {
   updatedAt?: Date;
 } // tirar
 
-class Credit {
-  name: string;
-  value: number;
-  dueDate: Date;
-  isAlive: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-} // tirar
-
 class Debt {
   name: string;
   price: number;
@@ -41,3 +32,12 @@ class Debt {
   createdAt?: Date;
   updatedAt?: Date;
 } // tirar
+
+export class Credit {
+  name: string;
+  value: number;
+  dueDate: Date;
+  isAlive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

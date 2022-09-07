@@ -8,8 +8,10 @@ import { CreateBankDto } from './dto/create-bank.dto';
 import { UpdateBankDto } from './dto/update-bank.dto';
 import { handleErrorConstraintUnique } from 'src/utils/handle-error-unique.util';
 import { handleTokenIsValid } from 'src/utils/handle-token-is-valid.util';
-import { Bank } from './entities/bank.entity';
+import { Bank, Credit } from './entities/bank.entity';
 import { User } from 'src/users/entities/user.entity';
+import { UpdateCreditDto } from './dto/update-credit.dto';
+import { CreateCreditDto } from './dto/create-credit.dto';
 
 @Injectable()
 export class BanksService {
@@ -80,15 +82,12 @@ export class BanksService {
     const bank = await this.prisma.bank.findUnique({
       where: { id },
       select: {
-        userEmail: true,
         id: true,
         name: true,
         value: true,
-        currencys: true,
+        userEmail: true,
         credit: true,
         debts: true,
-        createdAt: true,
-        updatedAt: true,
       },
     });
 
@@ -105,9 +104,25 @@ export class BanksService {
     email: string,
     headers: { authorization: string },
   ): Promise<Bank[]> {
-    const user: User = await this.verifyEmailAndReturnUser(headers, email);
+    await this.verifyEmailAndReturnUser(headers, email);
 
-    return user.banks;
+    const bank = await this.prisma.bank.findMany({
+      where: { userEmail: email },
+      select: {
+        id: true,
+        name: true,
+        value: true,
+        userEmail: true,
+        credit: true,
+        debts: true,
+      },
+    });
+
+    if (!bank) {
+      throw new NotFoundException(`0 banks found`);
+    }
+
+    return bank;
   }
 
   async update(
@@ -180,7 +195,7 @@ export class BanksService {
       .catch(handleErrorConstraintUnique);
   }
 
-  async remove(id: string, headers: { authorization: string }) {
+  async remove(id: string, headers: { authorization: string }): Promise<Bank> {
     const bank = await this.prisma.bank.findUnique({
       where: { id },
       select: {
@@ -202,9 +217,138 @@ export class BanksService {
 
     handleTokenIsValid(headers, bank.userEmail);
 
-    return this.prisma.bank.delete({
+    return this.prisma.bank.update({
       where: { id },
+      data: {
+        isAlive: false,
+      },
     });
+  }
+
+  async creditPost(
+    bankId: string,
+    dto: CreateCreditDto,
+    headers: { authorization: string },
+  ): Promise<Credit> {
+    const bank = await this.prisma.bank.findUnique({
+      where: { id: bankId },
+      select: {
+        userEmail: true,
+        id: true,
+        name: true,
+        value: true,
+        currencys: true,
+        credit: true,
+        debts: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!bank) {
+      throw new NotFoundException(`Bank id '${bankId}' not found`);
+    }
+
+    handleTokenIsValid(headers, bank.userEmail);
+
+    dto.dueDate = new Date(dto.dueDate);
+
+    return this.prisma.credit
+      .create({
+        data: {
+          ...dto,
+          bank: {
+            connect: {
+              id: bankId,
+            },
+          },
+        },
+      })
+      .then(async (credit) => {
+        await this.prisma.historic.create({
+          data: {
+            operation: 'Create Credit',
+            where: bank.name,
+            credit: {
+              ...dto,
+            },
+            user: {
+              connect: {
+                email: bank.userEmail,
+              },
+            },
+          },
+        });
+
+        return credit;
+      })
+      .catch(handleErrorConstraintUnique);
+  }
+
+  async creditUpdate(
+    bankId: string,
+    creditId: string,
+    dto: UpdateCreditDto,
+    headers: { authorization: string },
+  ): Promise<Credit> {
+    const bank = await this.prisma.bank.findUnique({
+      where: { id: bankId },
+      select: {
+        userEmail: true,
+        id: true,
+        name: true,
+        value: true,
+        currencys: true,
+        credit: true,
+        debts: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!bank) {
+      throw new NotFoundException(`Bank id '${bankId}' not found`);
+    }
+
+    handleTokenIsValid(headers, bank.userEmail);
+
+    dto.dueDate = new Date(dto.dueDate);
+
+    return this.prisma.credit
+      .update({
+        where: { id: creditId },
+        data: {
+          ...dto,
+        },
+      })
+      .then(async (credit) => {
+        const credits = await this.prisma.credit.findUnique({
+          where: { id: creditId },
+        });
+
+        const userEmail = bank.userEmail;
+
+        delete credits.id;
+        delete credits.bankName;
+
+        await this.prisma.historic.create({
+          data: {
+            operation: 'Update Credit',
+            where: bank.name,
+            credit: {
+              ...credits,
+            },
+            user: {
+              connect: {
+                email: userEmail,
+              },
+            },
+          },
+        });
+
+        return credit;
+      })
+      .catch(handleErrorConstraintUnique);
   }
 
   async verifyEmailAndReturnUser(
@@ -226,7 +370,7 @@ export class BanksService {
     });
 
     if (!user) {
-      throw new NotFoundException(`User email '${email}' not found`);
+      throw new NotFoundException(`User emaila '${email}' not found`);
     }
 
     handleTokenIsValid(headers, email);
