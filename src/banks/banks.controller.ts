@@ -18,11 +18,11 @@ import { Bank, Credit } from './entities/bank.entity';
 import { UpdateCreditDto } from './dto/update-credit.dto';
 import { CreateCreditDto } from './dto/create-credit.dto';
 
-@ApiTags('banks')
 @Controller('banks')
 export class BanksController {
   constructor(private readonly banksService: BanksService) {}
 
+  @ApiTags('banks')
   @Post(':email')
   @UseGuards(AuthGuard())
   @ApiOperation({
@@ -37,6 +37,7 @@ export class BanksController {
     return this.banksService.create(email, dto, headers);
   }
 
+  @ApiTags('banks')
   @Get(':id')
   @UseGuards(AuthGuard())
   @ApiOperation({
@@ -50,6 +51,7 @@ export class BanksController {
     return this.banksService.findOne(id, headers);
   }
 
+  @ApiTags('banks')
   @Get('all/:email')
   @UseGuards(AuthGuard())
   @ApiOperation({
@@ -63,6 +65,7 @@ export class BanksController {
     return this.banksService.findAll(email, headers);
   }
 
+  @ApiTags('banks')
   @Patch(':id')
   @UseGuards(AuthGuard())
   @ApiOperation({
@@ -77,6 +80,7 @@ export class BanksController {
     return this.banksService.update(id, dto, headers);
   }
 
+  @ApiTags('banks')
   @Delete(':id')
   @UseGuards(AuthGuard())
   @ApiOperation({
@@ -90,7 +94,8 @@ export class BanksController {
     return this.banksService.remove(id, headers);
   }
 
-  @Patch(':bankId/alive') //testar
+  @ApiTags('banks')
+  @Patch(':bankId/alive')
   @UseGuards(AuthGuard())
   @ApiOperation({
     summary: 'Update bank account status to alive',
@@ -103,7 +108,7 @@ export class BanksController {
     return this.banksService.bankToAlive(bankId, headers);
   }
 
-  //bank/{bankId}/credit
+  @ApiTags('credits')
   @Post(':bankId/credit')
   @UseGuards(AuthGuard())
   @ApiOperation({
@@ -117,8 +122,8 @@ export class BanksController {
   ): Promise<Credit | void> {
     return this.banksService.creditPost(bankId, dto, headers);
   }
-  //bank/{bankId}/credit/{creditId}
 
+  @ApiTags('credits')
   @Patch(':bankId/credit/:creditId')
   @UseGuards(AuthGuard())
   @ApiOperation({
@@ -134,6 +139,7 @@ export class BanksController {
     return this.banksService.creditUpdate(bankId, creditId, dto, headers);
   }
 
+  @ApiTags('credits')
   @Delete(':bankId/credit/:creditId') //testar
   @UseGuards(AuthGuard())
   @ApiOperation({
@@ -148,6 +154,7 @@ export class BanksController {
     return this.banksService.creditDelete(bankId, creditId, headers);
   }
 
+  @ApiTags('credits')
   @Patch(':bankId/credit/:creditId/alive') //testar
   @UseGuards(AuthGuard())
   @ApiOperation({
