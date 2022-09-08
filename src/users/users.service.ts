@@ -17,7 +17,8 @@ export class UsersService {
     id: true,
     name: true,
     email: true,
-    value: true,
+    userValue: true,
+    userCredit: true,
     password: false,
     banks: false,
     marks: false,
@@ -36,7 +37,8 @@ export class UsersService {
       password: hashedPassword,
       historics: {
         create: {
-          operation: 'Create User',
+          operation: 'Create',
+          model: 'User',
         },
       },
     };
@@ -73,7 +75,8 @@ export class UsersService {
           ...dto,
           historics: {
             create: {
-              operation: 'Update User',
+              operation: 'Update',
+              model: 'User',
             },
           },
         },

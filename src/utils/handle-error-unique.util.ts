@@ -7,5 +7,7 @@ export const handleErrorConstraintUnique = (error: Error): never => {
     splittedMessage[splittedMessage.length - 2]
   }' is not respecting the UNIQUE constraint`;
 
+  console.log(error);
+
   throw new UnprocessableEntityException(errorMessage);
 };

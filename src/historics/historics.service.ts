@@ -25,6 +25,7 @@ export class HistoricsService {
       select: {
         operation: true,
         where: true,
+        model: true,
         debt: true,
         credit: true,
         mark: true,

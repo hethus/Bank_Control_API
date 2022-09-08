@@ -2,7 +2,8 @@ import { Bank, Credit } from 'src/banks/entities/bank.entity';
 
 export class Historic {
   operation: string;
-  where: string;
+  model: string;
+  where?: string;
   debt?: Debt;
   credit?: Credit;
   mark?: Mark;

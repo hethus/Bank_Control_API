@@ -19,7 +19,8 @@ export class BanksService {
     id: true,
     name: true,
     email: true,
-    value: true,
+    userValue: true,
+    userCredit: true,
     password: false,
     banks: true,
     marks: false,
@@ -49,7 +50,8 @@ export class BanksService {
       .then(async (bank) => {
         await this.prisma.historic.create({
           data: {
-            operation: 'Create Bank',
+            operation: 'Create',
+            model: 'Bank',
             bank: {
               ...dto,
             },
@@ -67,7 +69,7 @@ export class BanksService {
               email,
             },
             data: {
-              value: {
+              userValue: {
                 increment: dto.value,
               },
             },
@@ -113,6 +115,7 @@ export class BanksService {
         name: true,
         value: true,
         userEmail: true,
+        isAlive: true,
         credit: true,
         debts: true,
       },
@@ -139,6 +142,7 @@ export class BanksService {
         value: true,
         currencys: true,
         credit: true,
+        isAlive: true,
         debts: true,
         createdAt: true,
         updatedAt: true,
@@ -178,7 +182,8 @@ export class BanksService {
 
         await this.prisma.historic.create({
           data: {
-            operation: 'Update Bank',
+            operation: 'Update',
+            model: 'Bank',
             bank: {
               ...banks,
             },
@@ -198,31 +203,176 @@ export class BanksService {
   async remove(id: string, headers: { authorization: string }): Promise<Bank> {
     const bank = await this.prisma.bank.findUnique({
       where: { id },
-      select: {
-        userEmail: true,
-        id: true,
-        name: true,
-        value: true,
-        currencys: true,
-        credit: true,
-        debts: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
 
     if (!bank) {
       throw new NotFoundException(`Bank id '${id}' not found`);
     }
 
-    handleTokenIsValid(headers, bank.userEmail);
+    if (bank.isAlive === false) {
+      throw new NotAcceptableException(`Bank id '${id}' is already deleted`);
+    }
 
-    return this.prisma.bank.update({
-      where: { id },
-      data: {
-        isAlive: false,
-      },
+    const user = await this.verifyEmailAndReturnUser(headers, bank.userEmail);
+
+    return this.prisma.bank
+      .update({
+        where: { id },
+        data: {
+          isAlive: false,
+        },
+        select: {
+          userEmail: true,
+          id: true,
+          name: true,
+          value: true,
+          currencys: true,
+          credit: true,
+          debts: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      })
+      .then(async (bankUpdate) => {
+        const banks = await this.prisma.bank.findUnique({
+          where: { id },
+        });
+
+        const userEmail = banks.userEmail;
+
+        delete banks.id;
+        delete banks.userEmail;
+
+        await this.prisma.historic.create({
+          data: {
+            operation: 'Delete',
+            model: 'Bank',
+            bank: {
+              ...banks,
+            },
+            user: {
+              connect: {
+                email: userEmail,
+              },
+            },
+          },
+        });
+
+        if (bankUpdate.credit) {
+          await this.prisma.user.update({
+            where: {
+              email: user.email,
+            },
+            data: {
+              userValue: {
+                decrement: bankUpdate.value,
+              },
+              userCredit: {
+                decrement: bankUpdate.credit.value,
+              },
+            },
+          });
+        } else {
+          await this.prisma.user.update({
+            where: {
+              email: user.email,
+            },
+            data: {
+              userValue: {
+                decrement: bankUpdate.value,
+              },
+            },
+          });
+        }
+
+        return bankUpdate;
+      })
+      .catch(handleErrorConstraintUnique);
+  }
+
+  async bankToAlive(bankId: string, headers: { authorization: string }) {
+    const bank = await this.prisma.bank.findUnique({
+      where: { id: bankId },
     });
+
+    if (!bank) {
+      throw new NotFoundException(`Bank id '${bankId}' not found`);
+    }
+
+    if (bank.isAlive === true) {
+      throw new NotAcceptableException(`Bank id '${bankId}' is already alive`);
+    }
+
+    const user = await this.verifyEmailAndReturnUser(headers, bank.userEmail);
+
+    return this.prisma.bank
+      .update({
+        where: { id: bankId },
+        data: {
+          isAlive: true,
+        },
+        select: {
+          userEmail: true,
+          id: true,
+          name: true,
+          value: true,
+          currencys: true,
+          credit: true,
+          debts: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      })
+      .then(async (bankUpdate) => {
+        delete bank.id;
+        delete bank.userEmail;
+        console.log(bank);
+
+        await this.prisma.historic.create({
+          data: {
+            operation: 'Alive',
+            model: 'Bank',
+            bank: {
+              ...bank,
+            },
+            user: {
+              connect: {
+                email: user.email,
+              },
+            },
+          },
+        });
+
+        if (bankUpdate.credit) {
+          await this.prisma.user.update({
+            where: {
+              email: user.email,
+            },
+            data: {
+              userValue: {
+                increment: bankUpdate.value,
+              },
+              userCredit: {
+                increment: bankUpdate.credit.value,
+              },
+            },
+          });
+        } else {
+          await this.prisma.user.update({
+            where: {
+              email: user.email,
+            },
+            data: {
+              userValue: {
+                increment: bankUpdate.value,
+              },
+            },
+          });
+        }
+
+        return bankUpdate;
+      })
+      .catch(handleErrorConstraintUnique);
   }
 
   async creditPost(
@@ -267,7 +417,8 @@ export class BanksService {
       .then(async (credit) => {
         await this.prisma.historic.create({
           data: {
-            operation: 'Create Credit',
+            operation: 'Create',
+            model: 'Credit',
             where: bank.name,
             credit: {
               ...dto,
@@ -276,6 +427,17 @@ export class BanksService {
               connect: {
                 email: bank.userEmail,
               },
+            },
+          },
+        });
+
+        await this.prisma.user.update({
+          where: {
+            email: bank.userEmail,
+          },
+          data: {
+            userCredit: {
+              increment: dto.value,
             },
           },
         });
@@ -310,9 +472,11 @@ export class BanksService {
       throw new NotFoundException(`Bank id '${bankId}' not found`);
     }
 
-    handleTokenIsValid(headers, bank.userEmail);
+    const user = await this.verifyEmailAndReturnUser(headers, bank.userEmail);
 
-    dto.dueDate = new Date(dto.dueDate);
+    if (dto.dueDate) {
+      dto.dueDate = new Date(dto.dueDate);
+    }
 
     return this.prisma.credit
       .update({
@@ -329,11 +493,12 @@ export class BanksService {
         const userEmail = bank.userEmail;
 
         delete credits.id;
-        delete credits.bankName;
+        delete credits.bankId;
 
         await this.prisma.historic.create({
           data: {
-            operation: 'Update Credit',
+            operation: 'Update',
+            model: 'Credit',
             where: bank.name,
             credit: {
               ...credits,
@@ -342,6 +507,154 @@ export class BanksService {
               connect: {
                 email: userEmail,
               },
+            },
+          },
+        });
+
+        if (dto.value) {
+          await this.prisma.user.update({
+            where: {
+              email: user.email,
+            },
+            data: {
+              userCredit: {
+                increment: dto.value,
+              },
+            },
+          });
+        }
+
+        return credit;
+      })
+      .catch(handleErrorConstraintUnique);
+  }
+
+  async creditDelete(
+    bankId: string,
+    creditId: string,
+    headers: { authorization: string },
+  ): Promise<Credit> {
+    const bank = await this.prisma.bank.findUnique({
+      where: { id: bankId },
+      select: {
+        userEmail: true,
+        id: true,
+        name: true,
+        value: true,
+        currencys: true,
+        credit: true,
+        debts: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!bank) {
+      throw new NotFoundException(`Bank id '${bankId}' not found`);
+    }
+
+    const user = await this.verifyEmailAndReturnUser(headers, bank.userEmail);
+
+    return this.prisma.credit
+      .update({
+        where: { id: creditId },
+        data: {
+          isAlive: false,
+        },
+      })
+      .then(async (credit) => {
+        const credits = await this.prisma.credit.findUnique({
+          where: { id: creditId },
+        });
+
+        const userEmail = bank.userEmail;
+
+        delete credits.id;
+        delete credits.bankId;
+
+        await this.prisma.historic.create({
+          data: {
+            operation: 'Remove',
+            model: 'Credit',
+            where: bank.name,
+            credit: {
+              ...credits,
+            },
+            user: {
+              connect: {
+                email: userEmail,
+              },
+            },
+          },
+        });
+
+        await this.prisma.user.update({
+          where: { email: user.email },
+          data: {
+            userCredit: {
+              decrement: credit.value,
+            },
+          },
+        });
+
+        return credit;
+      })
+      .catch(handleErrorConstraintUnique);
+  }
+
+  async creditToAlive(
+    bankId: string,
+    creditId: string,
+    headers: { authorization: string },
+  ): Promise<Credit> {
+    const bank = await this.prisma.bank.findUnique({
+      where: { id: bankId },
+    });
+
+    if (!bank) {
+      throw new NotFoundException(`Bank id '${bankId}' not found`);
+    }
+
+    const user = await this.verifyEmailAndReturnUser(headers, bank.userEmail);
+
+    return this.prisma.credit
+      .update({
+        where: { id: creditId },
+        data: {
+          isAlive: true,
+        },
+      })
+      .then(async (credit) => {
+        const credits = await this.prisma.credit.findUnique({
+          where: { id: creditId },
+        });
+
+        const userEmail = bank.userEmail;
+
+        delete credits.id;
+        delete credits.bankId;
+
+        await this.prisma.historic.create({
+          data: {
+            operation: 'Alive',
+            model: 'Credit',
+            where: bank.name,
+            credit: {
+              ...credits,
+            },
+            user: {
+              connect: {
+                email: userEmail,
+              },
+            },
+          },
+        });
+
+        await this.prisma.user.update({
+          where: { email: user.email },
+          data: {
+            userCredit: {
+              increment: credit.value,
             },
           },
         });

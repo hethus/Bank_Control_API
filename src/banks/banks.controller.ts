@@ -90,6 +90,19 @@ export class BanksController {
     return this.banksService.remove(id, headers);
   }
 
+  @Patch(':bankId/alive') //testar
+  @UseGuards(AuthGuard())
+  @ApiOperation({
+    summary: 'Update bank account status to alive',
+  })
+  @ApiBearerAuth()
+  bankToAlive(
+    @Headers() headers: { authorization: string },
+    @Param('bankId') bankId: string,
+  ): Promise<Bank | void> {
+    return this.banksService.bankToAlive(bankId, headers);
+  }
+
   //bank/{bankId}/credit
   @Post(':bankId/credit')
   @UseGuards(AuthGuard())
@@ -119,5 +132,33 @@ export class BanksController {
     @Body() dto: UpdateCreditDto,
   ): Promise<Credit | void> {
     return this.banksService.creditUpdate(bankId, creditId, dto, headers);
+  }
+
+  @Delete(':bankId/credit/:creditId') //testar
+  @UseGuards(AuthGuard())
+  @ApiOperation({
+    summary: 'Delete credit at the bank',
+  })
+  @ApiBearerAuth()
+  creditDelete(
+    @Headers() headers: { authorization: string },
+    @Param('bankId') bankId: string,
+    @Param('creditId') creditId: string,
+  ): Promise<Credit | void> {
+    return this.banksService.creditDelete(bankId, creditId, headers);
+  }
+
+  @Patch(':bankId/credit/:creditId/alive') //testar
+  @UseGuards(AuthGuard())
+  @ApiOperation({
+    summary: 'Update credit status at the bank to alive',
+  })
+  @ApiBearerAuth()
+  creditToAlive(
+    @Headers() headers: { authorization: string },
+    @Param('bankId') bankId: string,
+    @Param('creditId') creditId: string,
+  ): Promise<Credit | void> {
+    return this.banksService.creditToAlive(bankId, creditId, headers);
   }
 }
